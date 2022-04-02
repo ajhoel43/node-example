@@ -46,7 +46,7 @@ export function queryExec(opts: QueryOptions) {
     connectDB();
 
     db.query(db.format(opts.sql, opts.values), (err, results) => {
-      if (err) throw err;
+      if (err) reject(err);
 
       // console.log("Results: ", results);
       resolve(results);
