@@ -27,6 +27,14 @@ export function initConnection(dbConfig?: ConnectionConfig) {
   pool = new Pool(defaultConfig);
 }
 
+export interface selectParams {
+  table: string,
+  fields: string[],
+  filter?: queryFilter,
+  filterLike?: queryFilter,
+  opts?: selectOpts,
+}
+
 export interface insertParams {
   table: string,
   columns: object,
@@ -51,15 +59,43 @@ interface queryFilter {
   [index: string]: any
 }
 
+interface selectOpts {
+  limit?: number,
+  orderBy?: string|string[],
+  groupBy?: string[],
+}
+
 export interface dbResult {
   error: number,
   message?: string,
   data?: object,
 }
 
-// TODO: Finish this
-export function selectQuery() {
 
+/**
+ * Perform Basic Select Query
+ * @param params Select Parameters
+ * @returns Result
+ */
+export function selectQuery(params: selectParams): Promise<dbResult> {
+  return new Promise((resolve, reject) => {
+    let qStr = format.withArray(`SELECT %I FROM %I`, [params.fields, params.table]);
+
+    if (params.filter) {
+      qStr += _buildWhereClause(params.filter);
+    }
+    if (params.filterLike) {
+      qStr += _buildLikeClause(params.filterLike);
+    }
+
+    console.log("Query", qStr);
+
+    pool.query(qStr).then((result) => {
+      resolve(prepResult(0, result.rows));
+    }).catch((err) => {
+      reject(prepResult(1, err.message));
+    });
+  });
 }
 
 /**
@@ -154,6 +190,20 @@ function _buildWhereClause(filter?: queryFilter) {
   if (filter && Object.keys(filter).length > 0) {
     let qWhere = Object.keys(filter).map((val) => {
       return format(`%I = %L`, val, filter[val]);
+    }).join(' AND ');
+
+    qPart += ` WHERE ${qWhere}`;
+  }
+
+  return qPart;
+}
+
+function _buildLikeClause(filter?: queryFilter) {
+  let qPart = '';
+  if (filter && Object.keys(filter).length > 0) {
+    let qWhere = Object.keys(filter).map((val) => {
+      // return format(`LOWER(%I) LIKE LOWER('%%%s%%')`, val, filter[val]);
+      return format(`%I ILIKE '%%%s%%'`, val, filter[val]);
     }).join(' AND ');
 
     qPart += ` WHERE ${qWhere}`;

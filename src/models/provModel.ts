@@ -13,7 +13,9 @@ import {
   insertParams,
   prepResult,
   updateQuery,
-  updateParams 
+  updateParams, 
+  selectQuery,
+  selectParams
 } from "./pgHelper";
 
 interface ProvinceData {
@@ -22,15 +24,31 @@ interface ProvinceData {
   country_id?: Number
 }
 
-export async function readProvinces(whereClause?: object) {
-  let qOpts: QueryOptions = {
-    sql: "SELECT prov_id, prov_name FROM provinces WHERE prov_name LIKE ?",
-    values: ['%jawa%']
-  }
+// export async function readProvinces(whereClause?: object) {
+//   let qOpts: QueryOptions = {
+//     sql: "SELECT prov_id, prov_name FROM provinces WHERE prov_name LIKE ?",
+//     values: ['%jawa%']
+//   }
 
-  let result = await queryExec(qOpts);
-  console.log("QRes", result);
-  return result;
+//   let result = await queryExec(qOpts);
+//   console.log("QRes", result);
+//   return result;
+// }
+
+export async function readProvinces(params?: object): Promise<dbResult> {
+  try {
+    let sParams: selectParams = {
+      table: 'provinces',
+      fields: ['prov_id', 'prov_name'],
+      filterLike: params,
+    };
+    let result = await selectQuery(sParams);
+    console.log("readProvinces Model", result);
+    return result;
+  } catch (error: any) {
+    console.log("readProvinces Model", error);
+    return error;
+  }
 }
 
 export async function createProvince(data: ProvinceData) {

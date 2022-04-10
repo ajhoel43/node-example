@@ -7,8 +7,8 @@ import { Request, Response } from "express";
 import { createProvince, deleteProvince, readProvinces, updateProvince } from "../models/provModel";
 
 export async function getProvinces(req: Request, res: Response) {
-  let prov = await readProvinces();
-  res.send(prov);
+  let result = await readProvinces(req.query);
+  res.status(result.error == 0 ? 200 : 403).json(result);
 }
 
 export async function addProvince(req: Request, res: Response) {
